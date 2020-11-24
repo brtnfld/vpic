@@ -76,6 +76,7 @@ class Dump_Strategy {
     hid_t es_hydro = 0;
     hid_t es_particle=  0;
     H5ES_status_t es_status;
+    size_t es_cnt;
     float** temp_field = NULL;
     float** temp_particle = NULL;
     int** itemp_particle = NULL;
@@ -344,11 +345,11 @@ class HDF5Dump : public Dump_Strategy {
 #ifdef USE_ASYNC
             if( es_field > 0) {
               /* check if all operations in event set have completed */
-              H5EStest(es_field, &es_status);
-              if(es_status != H5ES_STATUS_SUCCEED) {
-                H5ESwait(es_field, timeout, &es_status);
-                H5EStest(es_field, &es_status);
-                if(es_status != H5ES_STATUS_SUCCEED) {
+              H5ESget_count(es_field, &es_cnt);
+              if(es_cnt != 0) {
+                hbool_t es_err;
+                H5ESwait(es_field, timeout, &es_cnt, &es_err);
+                if(es_cnt != 0 | es_err != 0) {
                   ERROR(("Failed to complete field async I/O \n"));
                 }
               } else {
@@ -884,8 +885,11 @@ class HDF5Dump : public Dump_Strategy {
             H5Sclose(memspace);
             H5Pclose(plist_id);
 #ifdef USE_ASYNC
+            printf("calling H5Gclose\n");
             H5Gclose_async(group_id, es_field);
-            H5Fclose_async(file_id, es_field);
+            printf("calling H5Fclose\n");
+            //H5Fclose_async(file_id, es_field);
+            printf("callingdone H5Fclose\n");
 #else
             H5Gclose(group_id);
             H5Fclose(file_id);
@@ -960,8 +964,8 @@ class HDF5Dump : public Dump_Strategy {
             }
 #ifdef USE_ASYNC
             /* check if field I/O has completed */
-            H5EStest(es_field, &es_status);
-            if(es_status = H5ES_STATUS_SUCCEED)
+            H5ESget_count(es_field, &es_cnt);
+            if(es_cnt = 0)
               free(temp_field);
 #endif
         }
