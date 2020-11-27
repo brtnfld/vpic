@@ -92,10 +92,10 @@ begin_initialization {
   // Numerical parameters
   double Lx        = 32*L;  // How big should the box be in the x direction
   double Ly        = 32*L;  // How big should the box be in the y direction
-  double Lz        = 32*L;  // How big should the box be in the z direction
+  double Lz        = 16*L;  // How big should the box be in the z direction
   double nx        = 128;    // Global resolution in the x direction
   double ny        = 128;    // Global resolution in the y direction
-  double nz        = 16;     // Global resolution in the z direction
+  double nz        = 8;     // Global resolution in the z direction
   double nppc      = 64;    // Average number of macro particles per cell (both species combined!)
   double cfl_req   = 0.99;  // How close to Courant should we try to run
   double wpedt_max = 0.36;  // How big a timestep is allowed if Courant is not too restrictive
@@ -140,7 +140,7 @@ begin_initialization {
   // Setup high level simulation parmeters
 
   num_step             = int(0.2*taui/(wci*dt));
-  status_interval      = int(8./(wci*dt));
+  status_interval      = int(16./(wci*dt));
   field_interval = status_interval;
   hydro_interval = status_interval;
   sync_shared_interval = status_interval;

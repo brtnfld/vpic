@@ -62,28 +62,58 @@
       std::cerr.flush();                               \
     }                                                  \
   } while(0)
+extern hid_t es_field;
+extern float** temp_field;
 
-
-// Runtime inheritance is obviously not very "VPIC like", as we will [probably]
-// incur a penalty for the vtable lookup, but given we're about to do IO this
-// is very negligible.
-class Dump_Strategy {
+#if 0 //def USE_ASYNC
+class async_data{
     public:
-    int rank, nproc, num_step;
-#if USE_ASYNC
     uint64_t timeout = pow(10,9); /* nano-seconds */
     hid_t es_field = 0;
     hid_t es_hydro = 0;
     hid_t es_particle=  0;
     H5ES_status_t es_status;
-    size_t es_cnt;
+    size_t es_cnt; 
     float** temp_field = NULL;
     float** temp_particle = NULL;
     int** itemp_particle = NULL;
     float** temp_hydro = NULL;
+    void getit(hid_t *_es_field) {
+      *_es_field=es_field;
+    }
+};      
 #endif
+// Runtime inheritance is obviously not very "VPIC like", as we will [probably]
+// incur a penalty for the vtable lookup, but given we're about to do IO this
+// is very negligible.
+class Dump_Strategy
+#if 0 //def USE_ASYNC
+ : public async_data
+#endif
+ {
+    public:
+    int rank, nproc, num_step;
+    //class async_data;  
+#ifdef USE_ASYNC
+    uint64_t timeout = pow(10,9); /* nano-seconds */
+//    hid_t es_field = 0;
+    hid_t es_hydro = 0;
+    hid_t es_particle=  0;
+    H5ES_status_t es_status;
+    size_t es_cnt;
+//    float** temp_field = NULL;
+    float** temp_particle = NULL;
+    int** itemp_particle = NULL;
+    float** temp_hydro = NULL;
+#endif
+#if 0
+    void getit(hid_t *_es_field) {
+      *_es_field=es_field;
+    }
+#endif
+    //using async_data::getit;
 
-    Dump_Strategy(int _rank, int _nproc ) :
+    Dump_Strategy(int _rank, int _nproc) :
         rank(_rank),
         nproc(_nproc)
     { } // empty
@@ -358,6 +388,12 @@ class HDF5Dump : public Dump_Strategy {
             } else {
               es_field = H5EScreate();
             }
+            printf("es_field %ld \n",es_field);
+            //hid_t tmp;
+            //async_data obj;
+            //obj.es_field = es_field;
+            //obj.getit(&tmp);
+            //printf("22es_field %ld \n", tmp); 
 #endif
             struct stat buffer;
             if((stat(fname, &buffer) == 0)){
@@ -388,7 +424,11 @@ class HDF5Dump : public Dump_Strategy {
 #endif
                 H5Pclose(plist_id);
             }else{
+#ifdef USE_ASYNC
+                file_id = H5Fopen_async(fname, H5F_ACC_RDWR, H5P_DEFAULT, es_field);
+#else
                 file_id = H5Fopen(fname, H5F_ACC_RDWR, H5P_DEFAULT);
+#endif
             }
 
             sprintf(fname, "Timestep_%zu", step_for_viou);
@@ -642,9 +682,9 @@ class HDF5Dump : public Dump_Strategy {
 #define DUMP_FIELD_TO_HDF5(DSET_NAME, ATTRIBUTE_NAME, ELEMENT_TYPE)     \
             {                                                           \
               if(!file_exist_flag){                                     \
-                dset_id = H5Dcreate(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT); \
+                dset_id = H5Dcreate_async(group_id, DSET_NAME, ELEMENT_TYPE, filespace, H5P_DEFAULT, dcpl_id, H5P_DEFAULT, es_field); \
               }else{                                                    \
-                dset_id = H5Dopen(group_id, DSET_NAME, H5P_DEFAULT);    \
+                dset_id = H5Dopen_async(group_id, DSET_NAME, H5P_DEFAULT, es_field);    \
                 dataspace_id = H5Dget_space(dset_id);                   \
               }                                                         \
               temp_buf_index = 0;                                       \
@@ -888,7 +928,8 @@ class HDF5Dump : public Dump_Strategy {
             printf("calling H5Gclose\n");
             H5Gclose_async(group_id, es_field);
             printf("calling H5Fclose\n");
-            //H5Fclose_async(file_id, es_field);
+            H5Fclose_async(file_id, es_field);
+            //H5Fclose(file_id);
             printf("callingdone H5Fclose\n");
 #else
             H5Gclose(group_id);
@@ -965,8 +1006,10 @@ class HDF5Dump : public Dump_Strategy {
 #ifdef USE_ASYNC
             /* check if field I/O has completed */
             H5ESget_count(es_field, &es_cnt);
-            if(es_cnt = 0)
+            if(es_cnt = 0){
+              printf("es_field has completed \n");
               free(temp_field);
+            }
 #endif
         }
         void dump_particles(

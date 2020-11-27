@@ -1,6 +1,8 @@
 #include "vpic.h"
 #define FAK field_array->kernel
 
+extern hid_t es_field; 
+
 void
 vpic_simulation::initialize( int argc,
                              char **argv ) {
@@ -65,6 +67,9 @@ vpic_simulation::initialize( int argc,
 
 void
 vpic_simulation::finalize( void ) {
+#ifdef USE_ASYNC
+  H5ESclose(es_field);
+#endif
   barrier();
   update_profile( rank()==0 );
 }

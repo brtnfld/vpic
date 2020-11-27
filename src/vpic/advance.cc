@@ -10,6 +10,9 @@
 
 #include "vpic.h"
 
+extern hid_t es_field;
+extern float **temp_field;
+
 #define FAK field_array->kernel
 
 int vpic_simulation::advance(void) {
@@ -19,6 +22,25 @@ int vpic_simulation::advance(void) {
   // Determine if we are done ... see note below why this is done here
 
   if( num_step>0 && step()>=num_step ) return 0;
+
+#if USE_ASYNC
+  /* check if all operations in event set have completed */
+    //dump_stateg = std::unique_ptr<Dump_Strategy>;
+     //Dump_Strategy es_field;
+     hbool_t es_err;
+     size_t cnt;
+     //hid_t es_field;
+     //async_data obj;
+     //Dump_Strategy obj; 
+     //obj.getit(&es_field);
+     //printf("%ld \n", es_field);
+     H5ESwait(es_field, 0., &cnt, &es_err);
+     if(cnt == 0) {
+       // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
+       if(temp_field) free(temp_field);
+     }
+ 
+#endif
 
   // Sort the particles for performance if desired.
 

@@ -4,6 +4,9 @@
 //}
 #include "dump_strategy.h"
 
+hid_t es_field;
+float** temp_field = NULL;
+
 void BinaryDump::dump_fields(
         const char *fbase,
         int step,
