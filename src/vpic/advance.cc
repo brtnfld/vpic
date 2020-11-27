@@ -11,7 +11,12 @@
 #include "vpic.h"
 
 extern hid_t es_field;
-extern float **temp_field;
+extern float** temp_field;
+extern hid_t es_hydro;
+extern float** temp_hydro;
+extern hid_t es_particle;
+extern float** temp_particle;
+extern int** itemp_particle;
 
 #define FAK field_array->kernel
 
@@ -39,7 +44,16 @@ int vpic_simulation::advance(void) {
        // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
        if(temp_field) free(temp_field);
      }
- 
+     H5ESwait(es_particle, 0., &cnt, &es_err);
+     if(cnt == 0) {
+       // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
+       if(temp_particle) free(temp_particle);
+     }
+     H5ESwait(es_hydro, 0., &cnt, &es_err);
+     if(cnt == 0) {
+       // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
+       if(temp_hydro) free(temp_hydro);
+     }
 #endif
 
   // Sort the particles for performance if desired.

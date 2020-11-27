@@ -4,8 +4,20 @@
 //}
 #include "dump_strategy.h"
 
+#if USE_ASYNC
 hid_t es_field;
-float** temp_field = NULL;
+hid_t es_hydro;
+hid_t es_particle;
+float* temp_field = NULL;
+#if HAS_HYDRO_COMP
+  hydro_t *temp_hydro = NULL;
+#else
+  float *temp_hydro = NULL;
+#endif
+#ifdef  HAS_PARTICLE_COMP
+  float* temp_particle = NULL;
+#endif
+#endif
 
 void BinaryDump::dump_fields(
         const char *fbase,
