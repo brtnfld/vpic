@@ -364,6 +364,30 @@ begin_diagnostics {
   // makes makes an energies dump.
   //MSB if( should_dump(energies) ) dump_energies( "energies", step()==0 ? 0 : 1 );
 
+  // Particle dumps store the particle data for a given species. The data
+  // written is known at the time t = time().  By default, particle dumps
+  // are tagged with step(). However, if a "0" is added to the call, the
+  // filename will not be tagged. Particle dumps are in a binary format.
+  // Each rank makes a particle dump.
+#if 1
+  if( should_dump(eparticle) ) {
+     double el1 = uptime();
+     dump_particles("electron","eparticle");
+     el1 = uptime() - el1;
+     sim_log("\033[1;33m dump_eparticle: " << el1 << " s\033[0m");
+  }
+#endif
+#if 0
+  if( should_dump(iparticle) ){
+     double el1 = uptime();
+     dump_particles("ion", "iparticle");
+     el1 = uptime() - el1;
+     sim_log("\033[1;33m dump_iparticle: " << el1 << " s\033[0m");
+  }
+#endif
+
+
+
   // Field dumps store the raw electromagnetic fields, sources and material
   // placement and a number of auxilliary fields. E, B and RHOB are
   // timecentered, JF and TCA are half a step old. Material fields are static
@@ -374,7 +398,7 @@ begin_diagnostics {
   // algorithm. As a result, JF is not valid until at least one timestep has
   // been completed. Field dumps are in a binary format. Each rank makes a
   // field dump.
-#if 1
+#if 0
   if( step()==-10 ) {
       double el1 = uptime();
       dump_fields("fields"); // Get first valid total J
@@ -397,7 +421,7 @@ begin_diagnostics {
   // purely diagnostic. It is not used by the simulation and it is not
   // accumulated using a self-consistent charge-conserving method. Hydro dumps
   // are in a binary format. Each rank makes a hydro dump.
-#if 1
+#if 0
   if(should_dump(ehydro) ) {
      double el1 = uptime();
      dump_hydro("electron","ehydro");
@@ -416,7 +440,7 @@ begin_diagnostics {
   // are tagged with step(). However, if a "0" is added to the call, the
   // filename will not be tagged. Particle dumps are in a binary format.
   // Each rank makes a particle dump.
-#if 1
+#if 0
   if( should_dump(eparticle) ) {
      double el1 = uptime();
      dump_particles("electron","eparticle");
@@ -424,7 +448,7 @@ begin_diagnostics {
      sim_log("\033[1;33m dump_eparticle: " << el1 << " s\033[0m");
   }
 #endif
-#if 1
+#if 0 
   if( should_dump(iparticle) ){
      double el1 = uptime();
      dump_particles("ion", "iparticle");
