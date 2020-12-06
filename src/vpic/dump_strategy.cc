@@ -8,7 +8,12 @@
 hid_t es_field;
 hid_t es_hydro;
 hid_t es_particle;
-float* temp_field = NULL;
+hbool_t es_err;
+#if HAS_FIELD_COMP
+  field_t* temp_field=NULL;
+#else
+  float* temp_field=NULL;
+#endif
 #if HAS_HYDRO_COMP
   hydro_t *temp_hydro = NULL;
 #else

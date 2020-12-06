@@ -62,12 +62,22 @@
       std::cerr.flush();                               \
     }                                                  \
   } while(0)
+
 extern hid_t es_field;
+#if HAS_FIELD_COMP
+extern field_t* temp_field;
+#else
 extern float* temp_field;
+#endif
 extern hid_t es_hydro;
+#if HAS_HYDRO_COMP
+extern hydro_t* temp_hydro;
+#else
 extern float* temp_hydro;
+#endif
 extern hid_t es_particle;
-extern float* temp_particle;
+//extern float* temp_particle;
+extern hbool_t es_err;
 
 #if 0 //def USE_ASYNC
 class async_data{
@@ -381,7 +391,6 @@ class HDF5Dump : public Dump_Strategy {
               /* check if all operations in event set have completed */
               H5ESget_count(es_field, &es_cnt);
               if(es_cnt != 0) {
-                hbool_t es_err;
                 H5ESwait(es_field, timeout, &es_cnt, &es_err);
                 if(es_cnt != 0 | es_err != 0) {
                   ERROR(("Failed to complete field async I/O \n"));
@@ -1131,14 +1140,13 @@ class HDF5Dump : public Dump_Strategy {
               /* check if all operations in event set have completed */
               H5ESget_count(es_particle, &es_cnt);
               if(es_cnt != 0) {
-                hbool_t es_err;
                 H5ESwait(es_particle, timeout, &es_cnt, &es_err);
                 if(es_cnt != 0 | es_err != 0) {
                   ERROR(("Failed to complete particle async I/O \n"));
                 }
-              } else {
-                free(temp_particle);
-              }
+              } //else {
+                //free(temp_particle);
+              //}
             } else {
               es_particle = H5EScreate();
             }
@@ -1377,7 +1385,6 @@ class HDF5Dump : public Dump_Strategy {
               /* check if all operations in event set have completed */
               H5ESget_count(es_hydro, &es_cnt);
               if(es_cnt != 0) {
-                hbool_t es_err;
                 H5ESwait(es_hydro, timeout, &es_cnt, &es_err);
                 if(es_cnt != 0 | es_err != 0) {
                   ERROR(("Failed to complete hydro async I/O \n"));

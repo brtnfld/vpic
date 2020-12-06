@@ -11,12 +11,21 @@
 #include "vpic.h"
 
 extern hid_t es_field;
-extern float** temp_field;
+#if HAS_FIELD_COMP
+extern field_t* temp_field;
+#else
+extern float* temp_field;
+#endif
 extern hid_t es_hydro;
-extern float** temp_hydro;
+#if HAS_HYDRO_COMP
+extern hydro_t* temp_hydro;
+#else
+extern float* temp_hydro;
+#endif
 extern hid_t es_particle;
-extern float** temp_particle;
-extern int** itemp_particle;
+extern float* temp_particle;
+extern int* itemp_particle;
+extern hbool_t es_err;
 
 #define FAK field_array->kernel
 
@@ -32,7 +41,6 @@ int vpic_simulation::advance(void) {
   /* check if all operations in event set have completed */
     //dump_stateg = std::unique_ptr<Dump_Strategy>;
      //Dump_Strategy es_field;
-     hbool_t es_err;
      size_t cnt;
      //hid_t es_field;
      //async_data obj;
@@ -45,10 +53,10 @@ int vpic_simulation::advance(void) {
        if(temp_field) free(temp_field);
      }
      H5ESwait(es_particle, 0., &cnt, &es_err);
-     if(cnt == 0) {
+     //if(cnt == 0) {
        // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
-       if(temp_particle) free(temp_particle);
-     }
+      // if(temp_particle) free(temp_particle);
+     //}
      H5ESwait(es_hydro, 0., &cnt, &es_err);
      if(cnt == 0) {
        // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
