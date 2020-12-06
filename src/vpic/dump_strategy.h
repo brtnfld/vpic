@@ -16,9 +16,9 @@
 //#define METADATA_COLL_WRITE 1
 //#define TRUE 1
 
-//#define HAS_FIELD_COMP 1
-//#define HAS_HYDRO_COMP 1
-//#define HAS_PARTICLE_COMP 1
+#define HAS_FIELD_COMP 1
+#define HAS_HYDRO_COMP 1
+#define HAS_PARTICLE_COMP 1
 
 //#define HAS_INDEPENDENT_IO 1
 
@@ -352,6 +352,9 @@ class HDF5Dump : public Dump_Strategy {
             int ftag
         )
         {
+#if USE_ASYNC
+            H5ESwait(es_particle, 0, &es_cnt, &es_err);
+#endif
             size_t step_for_viou = step;
             int file_exist_flag = 0;
 
@@ -389,9 +392,9 @@ class HDF5Dump : public Dump_Strategy {
 #ifdef USE_ASYNC
             if( es_field > 0) {
               /* check if all operations in event set have completed */
-              H5ESget_count(es_field, &es_cnt);
+              H5ESwait(es_field, 0, &es_cnt, &es_err); 
               if(es_cnt != 0) {
-                H5ESwait(es_field, timeout, &es_cnt, &es_err);
+                H5ESwait(es_field, H5ES_WAIT_FOREVER, &es_cnt, &es_err);
                 if(es_cnt != 0 | es_err != 0) {
                   ERROR(("Failed to complete field async I/O \n"));
                 }
@@ -1013,11 +1016,22 @@ class HDF5Dump : public Dump_Strategy {
             }
 #ifdef USE_ASYNC
             /* check if field I/O has completed before leaving I/O */
-            H5ESwait(es_field, 0., &es_cnt, &es_err);
+            H5ESwait(es_field, 0, &es_cnt, &es_err);
             if(es_cnt = 0) {
               printf("es_field has completed \n");
               free(temp_field);
             }
+           if( es_particle > 0) {
+              /* check if all operations in event set have completed */
+              H5ESwait(es_particle, 0, &es_cnt, &es_err);
+              if(es_cnt != 0) {
+                H5ESwait(es_particle, H5ES_WAIT_FOREVER, &es_cnt, &es_err);
+                if(es_cnt != 0 | es_err != 0) {
+                  ERROR(("Failed to complete particle async I/O \n"));
+                }
+              }
+            }
+
 #endif
         }
         void dump_particles(
@@ -1136,6 +1150,7 @@ class HDF5Dump : public Dump_Strategy {
                 H5Pset_coll_metadata_write(file_plist_id, TRUE);
             #endif
 #ifdef USE_ASYNC
+#if 0
             if( es_particle > 0) {
               /* check if all operations in event set have completed */
               H5ESget_count(es_particle, &es_cnt);
@@ -1148,8 +1163,12 @@ class HDF5Dump : public Dump_Strategy {
                 //free(temp_particle);
               //}
             } else {
+#endif
+            if( es_particle <= 0) {
               es_particle = H5EScreate();
             }
+//            H5ESwait(es_particle, 0, &es_cnt, &es_err);
+
 #endif
 #ifdef USE_ASYNC
             hid_t file_id = H5Fcreate_async(fname, H5F_ACC_TRUNC, H5P_DEFAULT, file_plist_id, es_particle);
@@ -1259,7 +1278,7 @@ class HDF5Dump : public Dump_Strategy {
 #if USE_ASYNC
     hid_t dset_id = H5Dcreate_async(group_id, "ParticleComp", particle_comp_type_it, filespace, 
                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT, es_particle);
-    H5Dwrite_aysnc(dset_id, particle_comp_type_it, memspace, filespace, io_plist_id, sp->p, es_particle);
+    H5Dwrite_async(dset_id, particle_comp_type_it, memspace, filespace, io_plist_id, sp->p, es_particle);
     H5Dclose_async(dset_id, es_particle);
 #else
     hid_t dset_id = H5Dcreate(group_id, "ParticleComp", particle_comp_type_it, filespace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -1340,6 +1359,10 @@ class HDF5Dump : public Dump_Strategy {
         {
             size_t step_for_viou = step;
 
+#if USE_ASYNC
+            H5ESwait(es_particle, 0, &es_cnt, &es_err);
+#endif
+
             //#define DUMP_INFO_DEBUG 1
             int mpi_size, mpi_rank;
             MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
@@ -1381,6 +1404,7 @@ class HDF5Dump : public Dump_Strategy {
             #endif
 
 #ifdef USE_ASYNC
+#if 0
             if( es_hydro > 0) {
               /* check if all operations in event set have completed */
               H5ESget_count(es_hydro, &es_cnt);
@@ -1393,6 +1417,8 @@ class HDF5Dump : public Dump_Strategy {
                 free(temp_hydro);
               }
             } else {
+#endif
+            if( es_hydro <= 0) {
               es_hydro = H5EScreate();
             }
 #endif
@@ -1728,6 +1754,7 @@ class HDF5Dump : public Dump_Strategy {
                 tframe_map[sp->id]++;
             }
 #ifdef USE_ASYNC
+            H5ESwait(es_particle, 0, &es_cnt, &es_err);
             /* check if field I/O has completed before leaving I/O */
             H5ESwait(es_hydro, 0., &es_cnt, &es_err);
             if(es_cnt = 0) {

@@ -37,7 +37,7 @@ int vpic_simulation::advance(void) {
 
   if( num_step>0 && step()>=num_step ) return 0;
 
-#if USE_ASYNC
+#ifdef USE_ASYNC
   /* check if all operations in event set have completed */
     //dump_stateg = std::unique_ptr<Dump_Strategy>;
      //Dump_Strategy es_field;
@@ -47,17 +47,17 @@ int vpic_simulation::advance(void) {
      //Dump_Strategy obj; 
      //obj.getit(&es_field);
      //printf("%ld \n", es_field);
-     H5ESwait(es_field, 0., &cnt, &es_err);
+     H5ESwait(es_field, 0, &cnt, &es_err);
      if(cnt == 0) {
        // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
        if(temp_field) free(temp_field);
      }
-     H5ESwait(es_particle, 0., &cnt, &es_err);
+     //H5ESwait(es_particle, 0., &cnt, &es_err);
      //if(cnt == 0) {
        // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
       // if(temp_particle) free(temp_particle);
      //}
-     H5ESwait(es_hydro, 0., &cnt, &es_err);
+     H5ESwait(es_hydro, 0, &cnt, &es_err);
      if(cnt == 0) {
        // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
        if(temp_hydro) free(temp_hydro);
@@ -235,6 +235,22 @@ int vpic_simulation::advance(void) {
   if( (status_interval>0) && ((step() % status_interval)==0) ) {
     if( rank()==0 ) MESSAGE(( "Completed step %i of %i", step(), num_step ));
     update_profile( rank()==0 );
+#ifdef USE_ASYNC
+  /* check if all operations in event set have completed */
+     size_t cnt;
+     H5ESwait(es_field, 0, &cnt, &es_err);
+     if(cnt != 0) {
+       H5ESwait(es_field, H5ES_WAIT_FOREVER, &cnt, &es_err);
+       // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
+       if(temp_field) free(temp_field);
+     }
+     H5ESwait(es_hydro, 0, &cnt, &es_err);
+     if(cnt != 0) {
+       H5ESwait(es_hydro, H5ES_WAIT_FOREVER, &cnt, &es_err);
+       // printf("ES COUNT IS ZERO, FREEING MEMORY\n");
+       if(temp_hydro) free(temp_hydro);
+     }
+#endif
   }
 
   // Let the user compute diagnostics
