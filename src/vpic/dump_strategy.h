@@ -1339,7 +1339,7 @@ class HDF5Dump : public Dump_Strategy {
 
 #ifdef USE_ASYNC
             /* check if field I/O has completed before leaving I/O */
-            H5ESwait(es_particle, 0., &es_cnt, &es_err);
+            H5ESwait(es_particle, 0, &es_cnt, &es_err);
             if(es_cnt = 0) {
               printf("es_particle has completed \n");
               //   free(temp_particle);
@@ -1756,7 +1756,7 @@ class HDF5Dump : public Dump_Strategy {
 #ifdef USE_ASYNC
             H5ESwait(es_particle, 0, &es_cnt, &es_err);
             /* check if field I/O has completed before leaving I/O */
-            H5ESwait(es_hydro, 0., &es_cnt, &es_err);
+            H5ESwait(es_hydro, 0, &es_cnt, &es_err);
             if(es_cnt = 0) {
               printf("es_hydro has completed \n");
               free(temp_hydro);
